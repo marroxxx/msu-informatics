@@ -16,19 +16,19 @@ enum {
 };
 
 class BigInt {
-    private:
-        vector <int32_t> digits;
-    public:
-        BigInt(int a);
-        BigInt(const BigInt &x);
-        void neg();
-        BigInt &add(const BigInt &a);
-        BigInt &sub(const BigInt &a);
-        BigInt &mul(const BigInt &a);
-        BigInt &div(const BigInt &a);
-        BigInt &mod(const BigInt &a);
-        BigInt &pow(const BigInt &a);
-        void print();
+private:
+    vector <int32_t> digits;
+public:
+    BigInt(int a);
+    BigInt(const BigInt &x);
+    void neg();
+    BigInt &add(const BigInt &a);
+    BigInt &sub(const BigInt &a);
+    BigInt &mul(const BigInt &a);
+    BigInt &div(const BigInt &a);
+    BigInt &mod(const BigInt &a);
+    BigInt &pow(const BigInt &a);
+    void print();
 };
 
 #endif
