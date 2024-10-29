@@ -2,33 +2,65 @@
 #define BIGINT_HPP
 
 
+#include <vector> 
+#include <cstdint> 
+#include <string> 
 #include <iostream>
-#include <string>
-#include <vector>
-#include <cstdint>
+#include <bitset>
 #include <algorithm>
 
-using std::string;
-using std::vector;
-
+using std::vector; 
+using std::string; 
+ 
 enum {
-    BASE_LEN = 8
+    BASE_LEN = 32
 };
 
-class BigInt {
-private:
-    vector <int32_t> digits;
-public:
-    BigInt(int a);
-    BigInt(const BigInt &x);
-    void neg();
-    BigInt &add(const BigInt &a);
-    BigInt &sub(const BigInt &a);
-    BigInt &mul(const BigInt &a);
-    BigInt &div(const BigInt &a);
-    BigInt &mod(const BigInt &a);
-    BigInt &pow(const BigInt &a);
-    void print();
+class BigInt { 
+private: 
+    vector<int32_t> digits; 
+public: 
+    BigInt(int32_t a = 0); 
+    BigInt(const BigInt &x); 
+    BigInt(const string &s); 
+    
+    BigInt operator+(const BigInt &x) const; 
+    //BigInt operator+(const int x) const; 
+    BigInt operator-(const BigInt &x) const; 
+    //BigInt operator-(const int x) const; 
+    BigInt operator*(const BigInt &x) const; 
+    //BigInt operator*(const int x) const; 
+ 
+    //BigInt operator/(const BigInt &x) const; 
+    //BigInt operator/(const int x) const; 
+    //BigInt operator%(const BigInt &x) const; 
+    //BigInt operator%(const int x) const; 
+    //BigInt operator^(const BigInt &x) const; 
+    //BigInt operator^(const int x) const; 
+ 
+    //BigInt &operator++(); 
+    //BigInt &operator--(); 
+    //BigInt operator++(int); 
+    //BigInt operator--(int); 
+     
+ 
+ 
+    BigInt operator+() const; 
+    BigInt operator-() const; 
+ 
+    bool operator>(const BigInt &x) const; 
+    bool operator<(const BigInt &x) const; 
+    bool operator>=(const BigInt &x) const; 
+    bool operator<=(const BigInt &x) const; 
+    bool operator==(const BigInt &x) const; 
+    bool operator!=(const BigInt &x) const; 
+     
+    friend std::ostream &operator<<(std::ostream &out, const BigInt &x); 
+     
+    //BigInt &mul(const BigInt &x) const; 
+    //BigInt &div(const BigInt &x) const; 
+    //BigInt &mod(const BigInt &x) const; 
+    //BigInt &pow(const BigInt &x) const; 
 };
 
 #endif
