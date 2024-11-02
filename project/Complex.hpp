@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <cstdint>
-#include <algorithm>
+#include <cstdlib>
 
 class Complex
 {

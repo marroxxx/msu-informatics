@@ -37,7 +37,14 @@ Complex::operator*(const Complex &x) const {
 Complex
 Complex::operator/(const Complex &x) const {
     Complex res;
-    res.re = (this->re * x.re + this->im * x.im) / (x.re * x.re + x.im * x.im);
+    if (x.re * x.re + x.im * x.im != 0) {
+        res.re = (this->re * x.re + this->im * x.im) / (x.re * x.re + x.im * x.im);
+        res.im = (this->im * x.re - this->re * x.im) / (x.re * x.re + x.im * x.im);
+    } else {
+        std::cerr << "err: division by zero" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    res.re = (x.re * x.re + x.im * x.im != 0) ? (this->re * x.re + this->im * x.im) / (x.re * x.re + x.im * x.im) : 0;
     res.im = (this->im * x.re - this->re * x.im) / (x.re * x.re + x.im * x.im);
     return res;
 }
@@ -65,7 +72,7 @@ operator<<(std::ostream &out, const Complex &x) {
 
 int 
 main(void) {
-    Complex x(INT_MAX, 2);
+    Complex x;
     Complex y(1, 4);
     std::cout << y / x << std::endl;
     return 0;
