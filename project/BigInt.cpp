@@ -117,6 +117,11 @@ operator<<(std::ostream &out, const BigInt &x) {
         out << x.digits[i];
         out << " ";
     }
+    out << std::endl << "Hex: ";
+    for (int i = x.digits.size() - 1; i >= 0; --i) {
+        out << std::hex << x.digits[i];
+        out << " ";
+    }
     return out;
 }
 
@@ -187,13 +192,55 @@ BigInt::operator<=(const BigInt &x) const {
     return *this < x || *this == x;
 }
 
+BigInt BigInt::operator*(const BigInt &x) const {
+    BigInt res;
+    res.digits.clear();
+    std::vector<int64_t> dig(this->digits.size() + x.digits.size(), 0);
+
+    for (size_t i = 0; i < this->digits.size(); ++i) {
+        for (size_t j = 0; j < x.digits.size(); ++j) {
+            dig[i + j] += static_cast<int64_t>(this->digits[i]) * x.digits[j];
+            if (dig[i + j] > INT32_MAX) {
+                dig[i + j + 1] += dig[i + j] / ((int64_t)INT32_MAX + 1);
+                dig[i + j] %= ((int64_t)INT32_MAX + 1);
+            }
+        }
+    }
+
+    for (size_t i = 0; i < dig.size() - 1; ++i) {
+        if (dig[i] > INT32_MAX) {
+            dig[i + 1] += dig[i] / ((int64_t)INT32_MAX + 1);
+            dig[i] %= ((int64_t)INT32_MAX + 1);
+        }
+    }
+
+    if (dig.back() > INT32_MAX) {
+        dig.push_back(dig.back() / ((int64_t)INT32_MAX + 1));
+        dig[dig.size() - 2] %= ((int64_t)INT32_MAX + 1);
+    }
+
+    for (int64_t elem : dig) {
+        res.digits.push_back(static_cast<int32_t>(elem));
+    }
+
+    while (!res.digits.empty() && res.digits.back() == 0) {
+        res.digits.pop_back();
+    }
+
+    if (res.digits.empty()) {
+        res.digits.push_back(0); 
+    }
+
+    return res;
+}
+
+
 int 
 main(void) {
-    BigInt num1("ffffffff");
-    BigInt num2("2");
-    BigInt num3(INT_MIN);
-    BigInt num4(1);
-    std::cout << num3 - num4 + num1 + num2 << std::endl;
+    BigInt num1(INT_MIN);
+    BigInt num2(INT_MAX);
+    BigInt num3(INT_MAX);
+    std::cout << num3 * num2 + num2 + num2 + num2 << std::endl;
     //std::cout << num1 + num2 - num1 - num1 << std::endl;
     return 0;
 }
