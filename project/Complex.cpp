@@ -10,6 +10,25 @@ Complex::Complex(const Complex &x) {
     this->im = x.im;
 }
 
+Complex::Complex(const std::string &x) {
+    std::string s = x;
+    size_t pos = x.find('+');
+    if (pos == std::string::npos) {
+        pos = x.find('-');
+    } 
+    if (pos == std::string::npos) {
+        std::cerr << "err: your number is incorrect. format is: a + bi or a - bi" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    if (pos != std::string::npos) {
+        this->re = std::stod(s.substr(0, pos));
+    }
+    pos = s.find('i');
+    if (pos != std::string::npos) {
+        this->im = std::stod(s.substr(0, pos));
+    }
+}
+
 Complex 
 Complex::operator+(const Complex &x) const {
     Complex res;
@@ -30,7 +49,7 @@ Complex
 Complex::operator*(const Complex &x) const {
     Complex res;
     res.re = this->re * x.re - this->im * x.im;
-    res.im = this->im * x.re + this->re * x.im;
+    res.im = this->re * x.im + this->im * x.re;
     return res;
 }
 
@@ -72,8 +91,7 @@ operator<<(std::ostream &out, const Complex &x) {
 
 int 
 main(void) {
-    Complex x;
-    Complex y(1, 4);
-    std::cout << y / x << std::endl;
+    Complex a("0+0i");
+    std::cout << a << std::endl;
     return 0;
 }
