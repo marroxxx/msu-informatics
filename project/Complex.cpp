@@ -11,22 +11,19 @@ Complex::Complex(const Complex &x) {
 }
 
 Complex::Complex(const std::string &x) {
+    if (x.empty()) {
+        this->re = 0;
+        this->im = 0;
+        return;
+    }
     std::string s = x;
-    size_t pos = x.find('+');
-    if (pos == std::string::npos) {
-        pos = x.find('-');
-    } 
-    if (pos == std::string::npos) {
-        std::cerr << "err: your number is incorrect. format is: a + bi or a - bi" << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
-    if (pos != std::string::npos) {
-        this->re = std::stod(s.substr(0, pos));
-    }
-    pos = s.find('i');
-    if (pos != std::string::npos) {
-        this->im = std::stod(s.substr(0, pos));
-    }
+    s.erase(std::remove_if(s.begin(), s.end(), ::isspace), s.end());
+    double real, imag;
+    char sign;
+    std::istringstream iss(s);
+    iss >> real >> sign >> imag;
+    this->re = real;
+    this->im = sign == '-' ? -imag : imag;
 }
 
 Complex 
@@ -34,6 +31,14 @@ Complex::operator+(const Complex &x) const {
     Complex res;
     res.re = this->re + x.re;
     res.im = this->im + x.im;
+    return res;
+}
+
+Complex 
+Complex::operator+(const int x) const {
+    Complex res;
+    res.re = this->re + x;
+    res.im = this->im;
     return res;
 }
 
@@ -46,10 +51,26 @@ Complex::operator-(const Complex &x) const {
 }
 
 Complex 
+Complex::operator-(const int x) const {
+    Complex res;
+    res.re = this->re - x;
+    res.im = this->im;
+    return res;
+}
+
+Complex 
 Complex::operator*(const Complex &x) const {
     Complex res;
     res.re = this->re * x.re - this->im * x.im;
     res.im = this->re * x.im + this->im * x.re;
+    return res;
+}
+
+Complex 
+Complex::operator*(const int x) const {
+    Complex res;
+    res.re = this->re * x;
+    res.im = this->im * x;
     return res;
 }
 
@@ -68,6 +89,43 @@ Complex::operator/(const Complex &x) const {
     return res;
 }
 
+Complex 
+Complex::operator/(const int x) const {
+    Complex res;
+    if (x != 0) {
+        res.re = this->re / x;
+        res.im = this->im / x;
+    } else {
+        std::cerr << "err: division by zero" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    return res;
+}
+
+Complex 
+Complex::operator^(const int x) const {
+    Complex res;
+    double mod = std::sqrt(this->re * this->re + this->im * this->im);
+    mod = std::pow(mod, x);
+    double phi = std::atan2(this->im, this->re);
+    res.re = mod * std::cos(phi * x);
+    res.im = mod * std::sin(phi * x);
+    return res;
+}
+
+Complex 
+Complex::operator+() const {
+    return *this;
+}
+
+Complex 
+Complex::operator-() const {
+    Complex res;
+    res.re = -this->re;
+    res.im = -this->im;
+    return res;
+}
+
 bool 
 Complex::operator==(const Complex &x) const {
     return this->re == x.re && this->im == x.im;
@@ -80,18 +138,28 @@ Complex::operator!=(const Complex &x) const {
 
 std::ostream &
 operator<<(std::ostream &out, const Complex &x) {
-    std::cout << x.re;
-    if (x.im >= 0) {
+    bool is_zero = true;
+    if (x.re != 0) {
+        std::cout << x.re;
+        is_zero = false;
+    } 
+    if (x.im > 0) {
         std::cout << " + " << x.im << "i";
-    } else {
+        is_zero = false;
+    } else if (x.im < 0) {
         std::cout << " - " << -x.im << "i";
+        is_zero = false;
+    }
+    if (is_zero) {
+        std::cout << 0;
     }
     return out;
 }
 
 int 
 main(void) {
-    Complex a("0+0i");
+    Complex a("1e-9 - 2e-8i");
+    Complex b("");
     std::cout << a << std::endl;
     return 0;
 }
