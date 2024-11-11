@@ -396,5 +396,8 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
+/project/pointers.exe
+
+
 # JetBrains Rider
 *.sln.iml

@@ -13,8 +13,8 @@ namespace pointers {
         unique_ptr<T>(const unique_ptr<T>&) = delete;
         unique_ptr<T> &operator=(const unique_ptr<T>&) = delete;
 
-        unique_ptr<T>(unique_ptr<T>&&);
-        unique_ptr<T> &operator=(unique_ptr<T>&&);
+        unique_ptr<T>(unique_ptr<T>&& x);
+        unique_ptr<T> &operator=(unique_ptr<T>&& x);
 
         ~unique_ptr<T>();
 
