@@ -28,6 +28,7 @@ namespace pointers {
     template <typename T>
     class shared_ptr {
     public:
+        shared_ptr<T>();
         shared_ptr<T>(T &&x);
         shared_ptr<T>(T *x);
 
@@ -39,8 +40,8 @@ namespace pointers {
 
         ~shared_ptr<T>();
 
-        T &operator*();
-        //operator->();
+        T &operator*() const; 
+        T *operator->() const;
     private:
         T *data;
         size_t *num_shared;
