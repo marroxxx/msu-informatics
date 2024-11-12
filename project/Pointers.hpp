@@ -7,14 +7,15 @@ namespace pointers {
     template <typename T>
     class unique_ptr {
     public:
+        unique_ptr<T>();
         unique_ptr<T>(T &&x); //дали объект, теперь вы ptr владеет им полностью
         unique_ptr<T>(T *x); //дали напрямую указатель
 
         unique_ptr<T>(const unique_ptr<T>&) = delete;
         unique_ptr<T> &operator=(const unique_ptr<T>&) = delete;
 
-        unique_ptr<T>(unique_ptr<T>&& x);
-        unique_ptr<T> &operator=(unique_ptr<T>&& x);
+        unique_ptr<T>(unique_ptr<T>&&);
+        unique_ptr<T> &operator=(unique_ptr<T>&&);
 
         ~unique_ptr<T>();
 
