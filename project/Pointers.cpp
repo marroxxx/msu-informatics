@@ -1,11 +1,11 @@
 #include "Pointers.hpp"
 #include <vector>
 #include <iostream>
+#include <mutex>
 
 using std::vector;
 
 namespace pointers {
-
     template <typename T>
     unique_ptr<T>::unique_ptr() {
         this->data = nullptr;
@@ -66,6 +66,7 @@ namespace pointers {
     shared_ptr<T>::shared_ptr(T &&x) {
         this->data = std::move(x);
         this->num_shared = new size_t(1);
+        this->num_weak = new size_t(0);
     }
 
     template <typename T> 
@@ -78,7 +79,8 @@ namespace pointers {
     template <typename T>
     shared_ptr<T>::shared_ptr(const shared_ptr<T>& x) { //uniq(x)
         if (*this->num_shared == 0) {
-            this->num_shared = new size_t(*x.num_shared + 1);
+            this->num_shared = x.num_shared;
+            ++(*x.num_shared);
             this->num_weak = x.num_weak;
             this->data = x.data;
         } else if (this->data != x.data) {
@@ -86,10 +88,15 @@ namespace pointers {
                 delete this->data;
                 delete this->num_shared;
                 delete this->num_weak;
-            } else {
-                this->num_shared = new size_t(*this->num_shared - 1);
                 this->data = x.data;
-                this->num_shared = new size_t(*x.num_shared + 1);
+                this->num_shared = x.num_shared;
+                ++(*x.num_shared);
+                this->num_weak = x.num_weak;
+            } else {
+                --this->num_shared;
+                this->num_shared = x.num_shared;
+                ++(*x.num_shared);
+                this->data = x.data;
                 this->num_weak = x.num_weak;
             }
         }
@@ -97,18 +104,23 @@ namespace pointers {
 
     template <typename T>
     shared_ptr<T> & shared_ptr<T>::operator=(const shared_ptr<T>& x) { //прилетает ссылка создаю новый объект
-        if (this != &x && *this->num_weak == 1) {
+        if (this != &x && *this->num_shared == 1) {
             delete(this->data);
             delete(this->num_shared);
             delete(this->num_weak);
             this->data = x.data;
-            this->num_shared = new size_t(*x.num_shared + 1);
+            this->num_shared = x.num_shared;
+            ++(*x.num_shared);
             this->num_weak = x.num_weak;
             return *this;
         }
         if (this != &x) {
+            if (this->num_shared != 0) {
+                --this->num_shared;
+            }
             this->data = x.data;
-            this->num_shared = new size_t(*x.num_shared + 1);
+            this->num_shared = x.num_shared;
+            ++(*x.num_shared);
             this->num_weak = x.num_weak;
         }
         return *this;
@@ -117,7 +129,7 @@ namespace pointers {
     template <typename T>
     shared_ptr<T>::shared_ptr(shared_ptr<T>&& x) {
         this->data = x.data;
-        this->num_shared = new size_t(*x.num_shared + 1);
+        this->num_shared = x.num_shared;
         this->num_weak = x.num_weak;
     }
 
@@ -127,12 +139,15 @@ namespace pointers {
             delete(this->data);
             delete(this->num_shared);
             delete(this->num_weak);
-            this->data = x->data;
-            this->num_shared = x->num_shared;
-            this->num_weak = x->num_weak;
+            this->data = x.data;
+            this->num_shared = x.num_shared;
+            this->num_weak = x.num_weak;
             return *this;
         }
         if (this != &x) {
+            if (this->num_shared != 0) {
+                --this->num_shared;
+            }
             this->data = x.data;
             this->num_shared = x.num_shared;
             this->num_weak = x.num_weak;
@@ -158,86 +173,118 @@ namespace pointers {
     T *shared_ptr<T>::operator->() const {
         return this->data;
     }
+
+    template <typename T>
+    weak_ptr<T>::weak_ptr(const weak_ptr<T>& x) {
+        this->data = x.data;
+        this->num_shared = x.num_shared;
+        this->num_weak = x.num_weak;
+        ++(*x.num_weak);
+    }
+
+    template <typename T>
+    weak_ptr<T> & weak_ptr<T>::operator=(const weak_ptr<T>& x) { 
+        if (this != &x) {
+            this->data = x.data;
+            this->num_shared = x.num_shared;
+            this->num_weak = x.num_weak;
+            ++(*x.num_weak);
+        }
+        return *this;
+    }
+
+    template <typename T>
+    weak_ptr<T>::weak_ptr(const shared_ptr<T>& x) {
+        this->data = x.data;
+        this->num_shared = x.num_shared;
+        this->num_weak = ++x.num_weak;
+    }
+
+    template <typename T>
+    weak_ptr<T> & weak_ptr<T>::operator=(const shared_ptr<T>& x) {
+        this->data = x.data;
+        this->num_shared = x.num_shared;
+        this->num_weak = ++x.num_weak;
+        return *this;
+    }
+
+    template <typename T>
+    weak_ptr<T>::weak_ptr(weak_ptr<T>&& x) {
+        this->data = x.data;
+        this->num_shared = x.num_shared;
+        this->num_weak = x.num_weak;
+    }
+
+    template <typename T>
+    weak_ptr<T> & weak_ptr<T>::operator=(weak_ptr<T>&& x) {
+        if (this != &x) {
+            this->data = x.data;
+            this->num_shared = x.num_shared;
+            this->num_weak = x.num_weak;
+        }
+        return *this;
+    }
+
+    template <typename T>
+    weak_ptr<T>::~weak_ptr() {
+        delete this->data;
+        delete this->num_shared;
+        delete this->num_weak;
+    }
+
+    template <typename T> 
+    bool weak_ptr<T>::expired() {
+        if (this->num_shared == nullptr || this->num_shared == 0) {
+            return true;
+        }
+        return false;
+    }
+
+    template <typename T>
+    T &weak_ptr<T>::operator*() {
+        return *this->data;
+    }
+
+    template <typename T>
+    T *weak_ptr<T>::operator->() {
+        return this->data;
+    }
 }
 
-
-
-class TestClass {
+class Singleton {
 public:
-    TestClass(int value) : value(value) {
-        std::cout << "TestClass constructor: " << value << std::endl;
+    Singleton(const Singleton&) = delete;
+    Singleton& operator=(const Singleton&) = delete;
+
+    static Singleton& get_instance() {
+        std::call_once(init_instance_flag, &Singleton::init_instance);
+        return *instance;
     }
-    ~TestClass() {
-        std::cout << "TestClass destructor: " << value << std::endl;
+
+    void some_method() { 
+        std::cout << "Вызван метод some_method" << std::endl;
     }
-    void display() const {
-        std::cout << "Value: " << value << std::endl;
-    }
+
 private:
-    int value;
+    Singleton() {
+        std::cout << "Создан экземпляр Singleton." << std::endl;
+    }
+
+    ~Singleton() {
+        std::cout << "Уничтожен экземпляр Singleton." << std::endl;
+    }
+    static void init_instance() {
+        instance = new Singleton();
+    }
+
+    static Singleton* instance;
+    static std::once_flag init_instance_flag; 
 };
 
-void test_unique_ptr() {
-    using namespace pointers;
-
-    std::cout << "Testing unique_ptr..." << std::endl;
-
-    unique_ptr<TestClass> ptr1(new TestClass(10));
-
-    ptr1->display();
-
-    (*ptr1).display();
-
-    unique_ptr<TestClass> ptr2(std::move(ptr1));
-
-    if (ptr1.operator->() == nullptr) {
-        std::cout << "ptr1 is null after move." << std::endl;
-    }
-
-    ptr2->display();
-
-    ptr2 = unique_ptr<TestClass>(new TestClass(20));
-    ptr2->display();
-
-    unique_ptr<TestClass> ptr3;
-    ptr3 = std::move(ptr2);
-
-    if (ptr2.operator->() == nullptr) {
-        std::cout << "ptr2 is null after move assignment." << std::endl;
-    }
-
-    ptr3->display();
-
-    std::cout << "Exiting test_unique_ptr function." << std::endl;
-}
-
-void test_shared_ptr() {
-    using namespace pointers;
-
-    std::cout << "Testing shared_ptr..." << std::endl;
-
-    shared_ptr<TestClass> ptr1(new TestClass(100));
-
-    shared_ptr<TestClass> ptr2(ptr1);
-
-    ptr1->display();
-    ptr2->display();
-    shared_ptr<TestClass> ptr3;
-    ptr3 = ptr1;
-
-    ptr3->display();
-    shared_ptr<TestClass> ptr4(std::move(ptr1));
-    if (ptr1.operator->() == nullptr) {
-        std::cout << "ptr1 is null after move." << std::endl;
-    }
-
-    ptr4->display();
-
-    std::cout << "Exiting test_shared_ptr function." << std::endl;
-}
+Singleton* Singleton::instance = nullptr;
+std::once_flag Singleton::init_instance_flag;
 
 int main() {
-    test_unique_ptr();
-    test_shared_ptr();
+    Singleton::get_instance().some_method();
     return 0;
 }

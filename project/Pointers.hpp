@@ -26,6 +26,9 @@ namespace pointers {
     };
 
     template <typename T>
+    class weak_ptr;
+
+    template <typename T>
     class shared_ptr {
     public:
         shared_ptr<T>();
@@ -40,8 +43,11 @@ namespace pointers {
 
         ~shared_ptr<T>();
 
+        friend class weak_ptr<T>;
+
         T &operator*() const; 
         T *operator->() const;
+
     private:
         T *data;
         size_t *num_shared;
@@ -66,7 +72,7 @@ namespace pointers {
         bool expired();
 
         T &operator*();
-        //operator->();
+        T *operator->();
     private:
         T *data;
         size_t *num_shared;
