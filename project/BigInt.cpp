@@ -1,5 +1,10 @@
 #include "BigInt.hpp"
 #include <sstream>
+#include <stack>
+#include <stdlib.h>
+
+using std::stack;
+using std::cerr;
 
 BigInt::BigInt(const BigInt &x) {
     this->digits = x.digits;
@@ -25,7 +30,7 @@ BigInt::BigInt(const string &s) {
             cur.push_back(s[i]);
             std::stringstream ss;
             if ((i + 1 + c) % 8 == 0) {
-                std::cout << cur << std::endl;
+                //std::cout << cur << std::endl;
                 ss << std::hex << cur;
                 ss >> value;
                 this->digits.push_back(value);
@@ -46,7 +51,7 @@ BigInt::BigInt(const string &s) {
             cur.push_back(s[i]);
             std::stringstream ss;
             if ((i + 1 + c) % 8 == 0) {
-                std::cout << cur << std::endl;
+                //std::cout << cur << std::endl;
                 ss << std::hex << cur;
                 ss >> value;
                 value = ~value + 1;
@@ -106,6 +111,7 @@ BigInt::operator+(const BigInt& x) const {
 
 std::ostream &
 operator<<(std::ostream &out, const BigInt &x) {
+    /*
     out << "Bits: ";
     for (int i = x.digits.size() - 1; i >= 0; --i) {
         std::bitset<BASE_LEN> binary(x.digits[i]);
@@ -118,9 +124,9 @@ operator<<(std::ostream &out, const BigInt &x) {
         out << " ";
     }
     out << std::endl << "Hex: ";
+    */
     for (int i = x.digits.size() - 1; i >= 0; --i) {
         out << std::hex << x.digits[i];
-        out << " ";
     }
     return out;
 }
@@ -234,13 +240,121 @@ BigInt BigInt::operator*(const BigInt &x) const {
     return res;
 }
 
+bool 
+BigInt::first(char c) {
+    return c == '+' || c == '-';
+}
 
-int 
-main(void) {
-    BigInt num1(INT_MIN);
-    BigInt num2(INT_MAX);
-    BigInt num3(INT_MAX);
-    std::cout << num3 * num2 + num2 + num2 + num2 << std::endl;
-    //std::cout << num1 + num2 - num1 - num1 << std::endl;
-    return 0;
+bool 
+BigInt::second(char c) {
+    return c == '*';
+}
+
+bool 
+BigInt::third(char c) {
+    return c == '^';
+}
+
+BigInt
+BigInt::calculate(string str) {
+    deque<string> d;
+    std::stack<char> op; 
+    for (int i = 0; i < (int)str.length() - 1; ++i) {
+        if (str[i] == '*' && str[i + 1] == '*') {
+            str[i] = '^';
+            str[i + 1] = ' ';
+        }
+    }
+    for (int i = 0; i < (int)str.length(); ++i) {
+        char c = str[i];
+        if (isxdigit(str[i]) || (c == '-' && (i == 0 || str[i-1] == '('))) {
+            string num;
+            if (c == '-') {
+                num.push_back(c);
+                ++i;
+            }
+            while (i < (int)str.length() && isxdigit(str[i])) {
+                num.push_back(str[i]);
+                ++i;
+            }
+            d.push_back(num);
+            --i;
+        } else if (first(c)) {
+            while (!op.empty() && op.top() != '(') {
+                string del(1, op.top());
+                op.pop();
+                d.push_back(del);
+            }
+            op.push(c);
+        } else if (second(c)) {
+            while (!op.empty() && (second(op.top()))) {
+                string del(1, op.top());
+                op.pop();
+                d.push_back(del);
+            }
+            op.push(c);
+        } else if (c == '(') {
+            op.push(c);
+        } else if (c == ')') {
+            while (!op.empty() && op.top() != '(') {
+                string del(1, op.top());
+                op.pop();
+                d.push_back(del);
+            }
+            if (op.empty()) {
+                cerr << "an error in setting the brackets\n";
+                exit(1);
+            } else if (op.top() == '(') {
+                op.pop();
+            }
+        } else if (c != ' ') {
+            cerr << "Unknown operator\n";
+            exit(1);
+        }
+    }
+    while (!op.empty()) {
+        if (op.top() == '(') {
+            cerr << "an error in setting the brackets\n";
+            exit(1);
+        }
+        string del(1, op.top());
+        op.pop();
+        d.push_back(del);
+    }
+    stack<BigInt> digits;
+    for (string s : d) {
+        if (isxdigit(s[0]) || (s[0] == '-' && s.length() > 1)) {
+            BigInt num(s);
+            digits.push(num);
+        } else {
+            if (digits.empty()) {
+                cerr << "an error with stack\n";
+                exit(1);
+            }
+            BigInt a = digits.top();
+            digits.pop();
+            if (digits.empty()) {
+                cerr << "an error with stack\n";
+                exit(1);
+            }
+            BigInt b = digits.top();
+            digits.pop();
+            char c = s[0];
+            switch (c) {
+                case '+':
+                    digits.push(b + a);
+                    break;
+                case '-':
+                    digits.push(b - a);
+                    break;
+                case '*':
+                    digits.push(b * a);
+                    break;
+                default:
+                    cerr << "Unknown operator (calculate error)\n";
+                    exit(1);
+            }
+        }
+    }
+    return digits.top();
 }
